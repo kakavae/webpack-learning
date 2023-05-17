@@ -1,6 +1,14 @@
+/* 路径解析 */
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+/* svg压缩 */
 const svgToMiniDataURI = require('mini-svg-data-uri')
+/* 将css文件单独抽离出来的插件 */
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+/* 压缩css文件, css-minimizer-webpack-plugin和style-loader不能同时使用，分开写loader也不行 */
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+/* 导入解析json5文件的parse */
+const json5 = require('json5')
 
 module.exports = {
   /* 打包的入口文件，从哪个js文件开始打包 */
@@ -26,10 +34,14 @@ module.exports = {
       filename: 'index.html', // 打包生成的文件名
       inject: 'body' // 设置所有资源文件注入模板的位置。可以设置的值
       // true|'head'|'body'|false，默认值为 true
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'styles/[contenthash].css'
     })
   ],
 
   /* 如果js运行报错，可以在浏览器控制台查看正确的报错位置 */
+  /* 源码映射，可以将编译压缩后的代码再对应回未压缩的源码。 */
   devtool: 'inline-source-map',
 
   /* npx webpack --watch 能够在文件更改之后自动打包文件 */
@@ -91,17 +103,40 @@ module.exports = {
       /* loader */
       /* 当你碰到「在 require() / import 语句中被解析为'.css' 的路径」时，在你对它打包之前，先 use(使用) raw-loader 转换一下 */
       /* loader 从右到左（或从下到上）地取值(evaluate)/执行(execute)。 */
-      {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader']
-      },
+      /*       {
+              test: /\.css$/,
+              use: ['style-loader', 'css-loader']
+            }, */
+      /* 从右到左执行loader，将less文件转换为css样式 */
       {
         test: /\.less/,
         use: ['style-loader', 'css-loader', 'less-loader']
+      },
+      /* 单独分离css文件 */
+      {
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
+      },
+      /* 解析其他文件 */
+      {
+        test: /\.json5$/,
+        type: 'json',
+        parser: {
+          parse: json5.parse
+        }
       }
     ]
   },
 
-  mode: 'development'  // 生产模式或者开发模式
+  // 生产模式或者开发模式
   // development, production 或 none 默认值为 production
+  mode: 'development',
+
+  /* 优化配置 */
+  optimization: {
+    minimizer: [
+      /* css压缩 */
+      new CssMinimizerPlugin(),
+    ]
+  }
 };

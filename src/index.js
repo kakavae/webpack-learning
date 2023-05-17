@@ -5,6 +5,8 @@ import txt from './static/test.txt'
 import imgPng from './assets/test.png'
 import './css/index.css'
 import './less/index.less'
+import intro from './static/intro.json'
+import person from './static/person.json5'
 
 const img = document.createElement('img')
 img.src = imgSrc
@@ -32,3 +34,5 @@ document.body.appendChild(imgA)
 document.body.appendChild(imgB)
 
 console.log(add(3, 4))
+console.log(intro)
+console.log('@@@@', person)
