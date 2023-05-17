@@ -1,0 +1,10 @@
+body {
+  background-color: red;
+}
+
+#block {
+  background: url('../assets/IMG20190909165000.jpg') no-repeat;
+  width: 100px;
+  height: 100px;
+  background-size: contain;
+}

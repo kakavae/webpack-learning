@@ -12,12 +12,32 @@ const json5 = require('json5')
 
 module.exports = {
   /* 打包的入口文件，从哪个js文件开始打包 */
-  entry: './src/index.js',
+  /* entry处代码分离--缺点：如果两个bundle import了相同的模块，这个模块会在两个bundle中都引入，造成重复，两个包都变很大，页面加载变慢 */
+  /* index.bundle.js 与 another.bundle.js 共享的模块 lodash.js 被打包到一个单独的文件 shared.bundle.js 中 */
+  // entry: {
+  //   /* 配置dependOn选项，共享模块 */
+  //   index: {
+  //     import: './src/index.js',
+  //     dependOn: 'shared'
+  //   },
+
+  //   another: {
+  //     import: './src/js/another-module.js',
+  //     dependOn: 'shared'
+  //   },
+
+  //   shared: 'lodash',
+  // },
+
+  entry: {
+    index: './src/index.js',
+    another: './src/js/another-module.js'
+  },
 
   /* 打包生成的js文件放在哪里 */
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'app.js',
+    filename: '[name].bundle.js',
 
     clean: true,  // 打包前清理dist文件夹
 
@@ -76,7 +96,6 @@ module.exports = {
         /* 这个编码的性质div的background的url 好像不识别  */
         generator: {
           dataUrl: (content) => {
-            console.log(svgToMiniDataURI(content.toString()))
             return svgToMiniDataURI(content.toString())
           }
         }
@@ -95,12 +114,12 @@ module.exports = {
         type: 'asset',
         parser: {
           dataUrlCondition: {
-            maxSize: 4 * 1024 // byte
+            maxSize: 8 * 1024 // byte
           }
         }
       },
 
-      /* loader */
+      /* 5. loader */
       /* 当你碰到「在 require() / import 语句中被解析为'.css' 的路径」时，在你对它打包之前，先 use(使用) raw-loader 转换一下 */
       /* loader 从右到左（或从下到上）地取值(evaluate)/执行(execute)。 */
       /*       {
@@ -124,6 +143,19 @@ module.exports = {
         parser: {
           parse: json5.parse
         }
+      },
+
+      /* 6. babel-loader */
+      /* 将es6新语法转换为低版本的语法 */
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env']
+          }
+        }
       }
     ]
   },
@@ -132,11 +164,16 @@ module.exports = {
   // development, production 或 none 默认值为 production
   mode: 'development',
 
-  /* 优化配置 */
+  /* 优化配置---压缩css */
   optimization: {
     minimizer: [
       /* css压缩 */
       new CssMinimizerPlugin(),
-    ]
+    ],
+
+    /* 模块chunk */
+    splitChunks: {
+      chunks: 'all',
+    },
   }
 };
